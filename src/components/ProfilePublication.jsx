@@ -1,12 +1,12 @@
-import { useAuth } from "../context/useAuth";
+import { useParams } from "react-router-dom";
 import { usePagination } from "../hooks/usePagination";
 import GetPublication from "./GetPublication";
 
 
-export default function MyPublication() {
-  const { user } = useAuth();
+export default function ProfilePublication() {
+  const { name } = useParams();
   const { items, page, totalPages, isLoading, isError, error, nextPage, prevPage } =
-    usePagination(`/publication/public/${user.username}`, 5); // 👈 endpoint y tamaño de página
+    usePagination(`/publication/public/${name}`, 5); // 👈 endpoint y tamaño de página
 
 
   if (isLoading) return <p>Cargando publicaciones...</p>;
