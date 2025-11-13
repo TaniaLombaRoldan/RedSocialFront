@@ -3,27 +3,34 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../context/useAuth";
 
-
+/**
+ * Muestra la informacion del perfil del usuario autenticado y permite cambiar el username.
+ * Carga los datos desde la API publica y dispara un PATCH que exige un nuevo inicio de sesion.
+ * @returns {JSX.Element} Tarjeta centrada con datos basicos y un formulario condicional.
+ */
 export default function MyUserProfile() {
   const { user } = useAuth();
+  // Datos provenientes del endpoint publico /users/public/:username.
   const [profile, setProfile] = useState(null);
+  // Estado del ciclo de vida del fetch inicial.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
-  // ✅ estado para mostrar/ocultar formulario
+  // Controla la visibilidad del formulario de cambio de username.
   const [showForm, setShowForm] = useState(false);
 
-
+  // Estado del formulario de actualizacion.
   const [newUsername, setNewUsername] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
   const [redirectMessage, setRedirectMessage] = useState("");
 
-
+  // Despues de montar cargamos el perfil del usuario logueado.
   useEffect(() => {
+    // Funcion auxiliar para hacer el fetch asyncrono y controlar errores.
     async function loadProfile() {
       if (!user?.username) {
+        // Si aun no hay username, dejamos de cargar para evitar llamadas vacias.
         setLoading(false);
         return;
       }
@@ -38,14 +45,18 @@ export default function MyUserProfile() {
         setLoading(false);
       }
     }
+    // Ejecutamos la carga en cada cambio de username.
     loadProfile();
-  }, [user.username]);
+  }, [user?.username]);
 
-
+  /**
+   * Valida el nuevo username, realiza el PATCH y fuerza la redireccion al login.
+   * @param {import("react").FormEvent<HTMLFormElement>} e Evento de submit.
+   */
   const handleChangeUsername = async (e) => {
     e.preventDefault();
     if (!newUsername.trim()) {
-      setUpdateError("El nombre de usuario no puede estar vacío.");
+      setUpdateError("El nombre de usuario no puede estar vacio.");
       return;
     }
     if (newUsername === user.username) {
@@ -53,10 +64,8 @@ export default function MyUserProfile() {
       return;
     }
 
-
     setIsUpdating(true);
     setUpdateError(null);
-
 
     try {
       await apiFetch("/users/change", {
@@ -64,28 +73,23 @@ export default function MyUserProfile() {
         body: JSON.stringify({ username: newUsername }),
       });
 
-
-      setRedirectMessage("Nombre de usuario actualizado. Serás redirigido al login...");
-
+      setRedirectMessage("Nombre de usuario actualizado. Seras redirigido al login...");
 
       setTimeout(() => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         window.location.replace("/login");
       }, 2000);
-
-
     } catch (err) {
       setUpdateError(err.message || "Error al actualizar el nombre de usuario.");
       setIsUpdating(false);
     }
   };
 
-
+  // Estados de salida temprana para mejorar la experiencia de usuario.
   if (loading) return <p>Cargando perfil...</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error.message}</p>;
-  if (!profile) return <p>No se encontró el perfil del usuario.</p>;
-
+  if (!profile) return <p>No se encontro el perfil del usuario.</p>;
 
   return (
     <div
@@ -99,15 +103,15 @@ export default function MyUserProfile() {
         textAlign: "center",
       }}
     >
+      {/* Datos basicos del usuario que se cargaron desde la API */}
       <h2 style={{ marginBottom: "10px" }}>{profile.username}</h2>
       <p>{profile.email}</p>
-      <p>{profile.description || "Sin descripción disponible"}</p>
+      <p>{profile.description || "Sin descripcion disponible"}</p>
 
-
+      {/* Separador visual entre informacion y acciones */}
       <hr style={{ margin: "30px 0" }} />
 
-
-      {/* ✅ Botón para mostrar/ocultar formulario */}
+      {/* Boton que despliega u oculta el formulario */}
       <button
         onClick={() => setShowForm(!showForm)}
         style={{
@@ -122,12 +126,10 @@ export default function MyUserProfile() {
         {showForm ? "Cancelar" : "Cambiar nombre de usuario"}
       </button>
 
-
-      {/* ✅ El formulario solo aparece si showForm es true */}
+      {/* Formulario para cambiar el username solo visible cuando showForm es true */}
       {showForm && (
         <form onSubmit={handleChangeUsername} style={{ marginTop: "20px" }}>
           <h3 style={{ marginBottom: "15px" }}>Cambiar nombre de usuario</h3>
-
 
           <div style={{ marginBottom: "10px" }}>
             <label
@@ -147,7 +149,7 @@ export default function MyUserProfile() {
             />
           </div>
 
-
+          {/* Boton principal, se deshabilita durante la peticion */}
           <button
             type="submit"
             disabled={isUpdating}
@@ -156,11 +158,10 @@ export default function MyUserProfile() {
             {isUpdating ? "Actualizando..." : "Actualizar nombre"}
           </button>
 
-
+          {/* Mensajes de error o exito del flujo de actualizacion */}
           {updateError && (
             <p style={{ color: "red", marginTop: "10px" }}>{updateError}</p>
           )}
-
 
           {redirectMessage && (
             <p style={{ color: "green", marginTop: "10px", fontWeight: "bold" }}>
@@ -172,12 +173,3 @@ export default function MyUserProfile() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
