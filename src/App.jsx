@@ -1,7 +1,5 @@
 // src/App.jsx
-// Aquí configuramos la navegación general de la app.
-// Dependemos del contexto de autenticación para saber si el usuario tiene token.
-
+// Configuramos la navegacion general de la app basandonos en el estado auth.
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/useAuth";
@@ -12,35 +10,24 @@ import AllPublicationsPage from "./pages/AllPublicationsPage";
 import MyProfilePage from "./pages/MyProfilePage";
 import ProfilePage from "./pages/ProfilePage";
 
-
-
-
 export default function App() {
   const { isAuthenticated } = useAuth();
-
-
-
 
   return (
     <Router>
       <Routes>
-        {/* Si NO está logueado, sólo puede ver la ruta "/" (login/registro) */}
         {!isAuthenticated ? (
           <>
             <Route path="/" element={<AuthPage />} />
-            <Route path="/register" element={<RegisterForm/>}/>
-            {/* Cualquier otra ruta redirige a login */}
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="*" element={<Navigate to="/" />} />
-           
           </>
         ) : (
           <>
-            {/* Rutas privadas */}
             <Route path="/" element={<HomePage />} />
             <Route path="/all" element={<AllPublicationsPage />} />
             <Route path="/me" element={<MyProfilePage />} />
             <Route path="/profile/:name" element={<ProfilePage />} />
-            {/* Cualquier otra ruta redirige a la principal */}
             <Route path="*" element={<Navigate to="/" />} />
           </>
         )}
@@ -49,22 +36,27 @@ export default function App() {
   );
 }
 
-
-
-
 /**
- * Página inicial cuando no hay sesión iniciada.
- * Muestra login y registro.
+ * Pantalla inicial cuando no hay sesion activa.
+ * Renderiza el formulario de login con branding Atlantar.
  */
 function AuthPage() {
   return (
     <main style={{ maxWidth: 500, margin: "40px auto" }}>
-      <h2>Bienvenida a MiniRed</h2>
+      <h2>Bienvenida a Atlantar</h2>
       <LoginForm />
     </main>
   );
+}
 
-
-
-
+/**
+ * Pantalla de registro con el mismo encabezado que login.
+ */
+function RegisterPage() {
+  return (
+    <main style={{ maxWidth: 500, margin: "40px auto" }}>
+      <h2>Bienvenida a Atlantar</h2>
+      <RegisterForm />
+    </main>
+  );
 }

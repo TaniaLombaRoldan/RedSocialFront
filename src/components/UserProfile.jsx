@@ -3,14 +3,20 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 
-
+/**
+ * Perfil publico de un usuario segun su nombre en la URL.
+ * Realiza una peticion al endpoint /users/public/:name y muestra informacion basica.
+ * @returns {JSX.Element} Tarjeta centrada con datos del perfil o mensajes de estado.
+ */
 export default function UserProfile() {
-  const { name } = useParams(); // toma el nombre de la URL
+  // Nombre capturado desde la ruta /profile/:name.
+  const { name } = useParams();
+  // Estado local para los datos, estados de carga y posibles errores.
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
+  // Carga el perfil cada vez que cambia el parametro de la URL.
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -25,11 +31,10 @@ export default function UserProfile() {
     loadProfile();
   }, [name]);
 
-
+  // Estados de salida tempranos.
   if (loading) return <p>Cargando perfil...</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error.message}</p>;
-  if (!profile) return <p>No se encontró el perfil del usuario.</p>;
-
+  if (!profile) return <p>No se encontro el perfil del usuario.</p>;
 
   return (
     <div
@@ -43,17 +48,10 @@ export default function UserProfile() {
         textAlign: "center",
       }}
     >
+      {/* Encabezado y datos basicos del usuario */}
       <h2 style={{ marginBottom: "20px" }}>{profile.username}</h2>
       <p>{profile.email}</p>
-      <p>{profile.description || "Sin descripción disponible"}</p>
+      <p>{profile.description || "Sin descripcion disponible"}</p>
     </div>
   );
 }
-
-
-
-
-
-
-
-
