@@ -1,15 +1,11 @@
 // src/pages/ProfilePage.jsx
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../components/Header";
 import ProfilePublication from "../components/ProfilePublication";
 import UserProfile from "../components/UserProfile";
-
-const palette = ["#031f3b", "#0a4f70", "#1b7891", "#6bc1d5", "#f4fbff"];
-const focusPoints = [
-  "Combinar brillos celestes con sombras profundas.",
-  "Usar fotos con bruma suave y reflejos de agua.",
-  "Mantener tipografias limpias y espaciadas.",
-];
+import { apiFetch } from "../api/client";
+import { useAuth } from "../context/useAuth";
 
 /**
  * Pagina publica que muestra la informacion y publicaciones de un usuario especifico.
@@ -18,66 +14,109 @@ const focusPoints = [
  */
 export default function ProfilePage() {
   const { name } = useParams();
+  const { user } = useAuth();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followError, setFollowError] = useState(null);
+  const [profileRefresh, setProfileRefresh] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    setFollowError(null);
+
+    // Si es mi propio perfil, no hay botón de seguir.
+    if (!user || user.username === name) {
+      setIsFollowing(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const following = await apiFetch("/users/following");
+        if (!alive) return;
+        const already = Array.isArray(following)
+          ? following.some((u) => u.username === name)
+          : false;
+        setIsFollowing(already);
+      } catch (err) {
+        if (alive) {
+          setFollowError(err?.message || "No se pudo verificar seguimiento.");
+        }
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [name, user]);
+
+  const handleFollow = async () => {
+    if (followLoading || isFollowing) return;
+    try {
+      setFollowLoading(true);
+      setFollowError(null);
+      await apiFetch(`/users/follow/${name}`, { method: "POST" });
+      setIsFollowing(true);
+      setProfileRefresh((v) => v + 1);
+    } catch (err) {
+      setFollowError(err?.message || "No se pudo seguir al usuario.");
+    } finally {
+      setFollowLoading(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleUnfollow = async () => {
+    if (followLoading) return;
+    try {
+      setFollowLoading(true);
+      setFollowError(null);
+      await apiFetch(`/users/unfollow/${name}`, { method: "DELETE" });
+      setIsFollowing(false);
+      setProfileRefresh((v) => v + 1);
+    } catch (err) {
+      setFollowError(err?.message || "No se pudo dejar de seguir al usuario.");
+    } finally {
+      setFollowLoading(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleMainFollowClick = () => {
+    if (isFollowing) handleUnfollow();
+    else handleFollow();
+  };
 
   return (
     <>
       <Header />
       <div className="atlantar-shell">
         <section className="atlantar-hero">
-          <p className="atlantar-tagline">Timeline Atlantar</p>
+          <p className="atlantar-tagline">Atlantar perfil</p>
           <h1>@{name}</h1>
-          <p className="atlantar-description">
-            Destellos marinos, cielos electricos y mensajes que mezclan calma y
-            energia. Esta vista te ayuda a imaginar el branding de tu cuenta con
-            pocos bloques y estilos basados en flex y grid.
-          </p>
-          <div className="atlantar-actions">
-            <button type="button" className="primary">
-              Seguir
-            </button>
-            <button type="button" className="secondary">
-              Compartir vibra
-            </button>
-          </div>
-        </section>
-
-        <section className="atlantar-grid">
-          <article className="atlantar-panel">
-            <h3>Identidad</h3>
-            <p>
-              Atlantar mezcla mar y cielo: azul profundo, luces turquesas y
-              texto claro. Usa bloques amplios y sombras largas para que cada
-              post respire.
-            </p>
-          </article>
-
-          <article className="atlantar-panel">
-            <h3>Marea creativa</h3>
-            <ul className="atlantar-list">
-              {focusPoints.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="atlantar-panel">
-            <h3>Paleta base</h3>
-            <div className="atlantar-palette">
-              {palette.map((tone) => (
-                <div
-                  key={tone}
-                  className="atlantar-swatch"
-                  style={{ backgroundColor: tone }}
-                >
-                  {tone}
-                </div>
-              ))}
+          {user?.username !== name && (
+            <div style={{ position: "relative", alignSelf: "flex-end" }}>
+              <button
+                type="button"
+                className="atlantar-follow-hero"
+                onClick={handleMainFollowClick}
+                disabled={followLoading}
+              >
+                {followLoading
+                  ? "Procesando..."
+                  : isFollowing
+                  ? "Dejar de seguir"
+                  : "Seguir"}
+              </button>
             </div>
-          </article>
+          )}
+          {followError && (
+            <p style={{ margin: "0.25rem 0 0", color: "#f28b82" }}>{followError}</p>
+          )}
         </section>
 
-        <section className="atlantar-shadow-card">
-          <UserProfile />
+        <section className="atlantar-white-card">
+          <UserProfile key={`${name}-${profileRefresh}`} />
         </section>
 
         <section className="atlantar-shadow-card">
