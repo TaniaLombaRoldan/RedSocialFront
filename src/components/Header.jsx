@@ -56,9 +56,17 @@ export default function Header() {
       {/* Zona derecha: informacion del usuario autenticado y acciones de sesion */}
       <div style={{ display: "flex", alignItems: "center" }}>
         {/* Mostramos el username y usamos "Usuario" mientras no llega la data */}
-        <span style={{ marginRight: 10, color: "var(--atlantar-muted)" }}>
+        <Link
+          to={user?.username ? `/profile/${user.username}` : "/me"}
+          style={{
+            marginRight: 10,
+            color: "var(--atlantar-muted)",
+            textDecoration: "none",
+            fontWeight: 600,
+          }}
+        >
           {user?.username ?? "Usuario"}
-        </span>
+        </Link>
         {/* Boton primario para cerrar la sesion actual */}
         <button
           onClick={logout}
