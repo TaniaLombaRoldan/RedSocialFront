@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 /**
  * Componente controlado que permite crear publicaciones para el usuario autenticado.
  * Valida el formulario, muestra errores y mantiene sincronizadas las listas relacionadas
- * forzando la invalidadcion de queries en React Query.
+ * forzando la invalidacion de queries en React Query.
  *
  * @param {CreatePublicationProps} props
  * @returns {JSX.Element}
@@ -21,23 +21,14 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function CreatePublication({ onNewPublication }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  // Estado controlado del contenido escrito por el usuario.
   const [text, setText] = useState("");
-  // Flag para deshabilitar el formulario mientras se envia.
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Mensaje de error visible debajo del formulario.
   const [error, setError] = useState(null);
 
-  // Si el usuario no esta logueado, no mostramos el formulario
   if (!user) {
     return <p>Debes estar logueado para crear una publicacion.</p>;
   }
 
-  /**
-   * Realiza la validacion basica, ejecuta el POST y sincroniza los caches.
-   * @param {import("react").FormEvent<HTMLFormElement>} e Evento submit del formulario.
-   * @returns {Promise<void>}
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -55,13 +46,10 @@ export default function CreatePublication({ onNewPublication }) {
         body: JSON.stringify({ text }),
       });
 
-      // Limpiamos el formulario
       setText("");
 
-      // Avisamos al padre (homepage) que hay una nueva publicacion
       if (onNewPublication) onNewPublication(newPublication);
 
-      // Forzar refresco de listas relacionadas
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/publication/"], exact: false }),
         queryClient.invalidateQueries({ queryKey: [`/publication/public/${user.username}`], exact: false }),
@@ -90,7 +78,6 @@ export default function CreatePublication({ onNewPublication }) {
       <h3 style={{ marginTop: 0, letterSpacing: "0.05em", color: "var(--atlantar-foam)" }}>
         Crea una nueva publicacion
       </h3>
-      {/* Formulario controlado que dispara handleSubmit */}
       <form
         onSubmit={handleSubmit}
         style={{
@@ -100,32 +87,30 @@ export default function CreatePublication({ onNewPublication }) {
         }}
       >
         <textarea
-          value={text}
+        value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="En que estas pensando?"
-          rows={4}
-          style={{
-            width: "100%",
-            padding: "14px",
-            borderRadius: "16px",
-            border: "1px solid rgba(244,251,255,0.2)",
-            resize: "none",
-            backgroundColor: "#ffffff",
-            color: "#082032",
-            boxShadow: "0 10px 25px rgba(3,31,59,0.25)",
-          }}
-          disabled={isSubmitting}
+        placeholder="¿Qué estás pensando?"
+        rows={4}
+       style={{
+         width: "100%",
+        padding: "14px",
+        borderRadius: "16px",
+         border: "1px solid rgba(244,251,255,0.2)",
+         resize: "none",
+        backgroundColor: "#ffffff",
+          color: "#082032",
+          boxShadow: "0 10px 25px rgba(3,31,59,0.25)",
+            
+        '::placeholder': {
+            color: "#082032"
+    }
+  }}
+  disabled={isSubmitting}
         />
-        {/* Boton principal cambia de texto segun el estado */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{ alignSelf: "flex-end" }}
-        >
+        <button type="submit" disabled={isSubmitting} style={{ alignSelf: "flex-end" }}>
           {isSubmitting ? "Publicando..." : "Publicar"}
         </button>
       </form>
-      {/* Feedback visual de errores de validacion o red */}
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
     </div>
   );
