@@ -111,7 +111,7 @@ export default function ProfilePage() {
             </div>
           )}
           {followError && (
-            <p style={{ margin: "0.25rem 0 0", color: "#f28b82" }}>{followError}</p>
+            <p >{followError}</p>
           )}
         </section>
 
