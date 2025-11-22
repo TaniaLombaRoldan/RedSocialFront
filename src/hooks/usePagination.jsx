@@ -38,14 +38,26 @@ export function usePagination(endpoint, pageSize = 5) {
   const items = data?.content || [];
   const totalPages = data?.totalPages || 1;
 
+  const scrollToTop = () => {
+    if (typeof window !== "undefined" && window.scrollTo) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   // Avanza una pagina mientras no lleguemos al final.
   const nextPage = () => {
-    if (page < totalPages - 1) setPage((p) => p + 1);
+    if (page < totalPages - 1) {
+      setPage((p) => p + 1);
+      scrollToTop();
+    }
   };
 
   // Retrocede siempre que no estemos en la primera pagina.
   const prevPage = () => {
-    if (page > 0) setPage((p) => p - 1);
+    if (page > 0) {
+      setPage((p) => p - 1);
+      scrollToTop();
+    }
   };
 
   return {
