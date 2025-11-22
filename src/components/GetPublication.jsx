@@ -1,6 +1,8 @@
 // src/components/GetPublication.jsx
+import { useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { gsap } from "gsap";
 import { useAuth } from "../context/useAuth";
 import { apiFetch } from "../api/client";
 
@@ -25,16 +27,41 @@ export default function GetPublication({ id, authorName, text, createDate }) {
   const navigate = useNavigate();
   // Cliente para invalidar caches despues de borrar.
   const queryClient = useQueryClient();
+  const pubRef = useRef(null);
+
+  // Animacion de entrada al hacer scroll usando GSAP + ScrollTrigger (registrado en main.jsx).
+  useEffect(() => {
+    const el = pubRef.current;
+    if (!el) return;
+
+    gsap.set(el, { opacity: 0, y: 50 });
+    const tween = gsap.to(el, {
+      opacity: 1,
+      y: 0,
+      duration: 0.85,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: el,
+        start: "top 90%",
+        once: true,
+      },
+    });
+
+    return () => {
+      tween?.kill();
+      gsap.killTweensOf(el);
+    };
+  }, []);
 
   // Mutacion encargada de borrar la publicacion e invalidar las queries relacionadas.
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await apiFetch(`/publication/${id}`, { method: "DELETE" });
+      await apiFetch(`/publications/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       // Invalida cualquier query relacionada con publicaciones para refrescar la vista.
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0]?.includes("/publication"),
+        predicate: (query) => query.queryKey[0]?.includes("/publications"),
       });
     },
     onError: (error) => {
@@ -51,6 +78,7 @@ export default function GetPublication({ id, authorName, text, createDate }) {
 
   return (
     <div
+      ref={pubRef}
       style={{
         border: "1px solid rgba(3, 31, 59, 0.08)",
         borderRadius: "18px",
@@ -59,6 +87,8 @@ export default function GetPublication({ id, authorName, text, createDate }) {
         backgroundColor: "#ffffff",
         color: "#111",
         boxShadow: "0 12px 32px rgba(3, 31, 59, 0.12)",
+        opacity: 0,
+        transform: "translateY(40px)",
       }}
     >
       <p>

@@ -1,28 +1,45 @@
 // src/components/MyPublication.jsx
+import { useEffect, useRef } from "react";
 import { useAuth } from "../context/useAuth";
-import { usePagination } from "../hooks/usePagination";
+import { useInfinitePublications } from "../hooks/useInfinitePublications";
 import GetPublication from "./GetPublication";
 
 /**
- * Lista paginada con las publicaciones del usuario autenticado.
- * Se apoya en el hook de paginacion para cargar datos en bloques y mostrar mensajes de estado.
- * @returns {JSX.Element} Contenedor con publicaciones, paginador y feedback de carga/error.
+ * Lista infinita con las publicaciones del usuario autenticado.
+ * Dispara nuevas paginas al alcanzar el sentinel con scroll.
  */
 export default function MyPublication() {
-  // Recuperamos al usuario actual para construir el endpoint filtrado por username.
-  const { user } = useAuth();
-  // Hook reutilizable que trae items, metadatos y callbacks de paginacion.
-  const { items, page, totalPages, isLoading, isError, error, nextPage, prevPage } =
-    usePagination(`/publication/public/${user.username}`, 5); // 5 elementos por pagina
+  const { user } = useAuth(); // usuario logueado para construir el endpoint
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status, error } =
+    useInfinitePublications(`/publications/public/${user.username}`, 5);
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    // Observa el sentinel para solicitar mas publicaciones propias al llegar al final.
+    if (!hasNextPage) return;
+    const el = sentinelRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => entries[0].isIntersecting && fetchNextPage(),
+      { rootMargin: "200px 0px" }
+    );
+    if (el) observer.observe(el);
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [hasNextPage, fetchNextPage]);
 
   // Estados tempranos para mejorar UX mientras carga o cuando falla.
-  if (isLoading) return <p>Cargando publicaciones...</p>;
-  if (isError) return <p style={{ color: "red" }}>Error: {error.message}</p>;
+  if (status === "loading") return <p>Cargando publicaciones...</p>;
+  if (status === "error") return <p style={{ color: "red" }}>Error: {error.message}</p>;
+
+  const items = data?.pages?.flatMap((p) => p.content || []) || []; // publicaciones propias acumuladas
+  const totalPages = data?.pages?.[0]?.totalPages ?? 1; // total informado por el backend
+  const currentPage = data?.pages?.length ?? 1; // numero de paginas ya cargadas
 
   return (
     <div style={{ padding: "20px" }}>
       <h2>
-        Publicaciones (pagina {page + 1} de {totalPages})
+        Publicaciones (pagina {currentPage} / {totalPages})
       </h2>
 
       {/* Mensaje cuando el usuario no tiene publicaciones */}
@@ -39,19 +56,9 @@ export default function MyPublication() {
         />
       ))}
 
-      {/* Controles basicos de paginacion */}
-      <div style={{ marginTop: "20px" }}>
-        <button onClick={prevPage} disabled={page === 0}>
-          Anterior
-        </button>
-        <button
-          onClick={nextPage}
-          disabled={page >= totalPages - 1}
-          style={{ marginLeft: "10px" }}
-        >
-          Siguiente
-        </button>
-      </div>
+      <div ref={sentinelRef} style={{ height: "4px" }} />
+      {isFetchingNextPage && <p>Cargando mas...</p>}
+      {!hasNextPage && items.length > 0 && <p>No hay mas publicaciones.</p>}
     </div>
   );
 }
