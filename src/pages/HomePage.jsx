@@ -12,7 +12,7 @@ export default function HomePage() {
       <Header />
       <main style={{ padding: 20 }}>
         <h3>Publicaciones de tus seguidos</h3>
-        {/* Lista paginada que consume /publication/following */}
+        {/* Lista paginada que consume /publications/following */}
         <PublicationFollowing />
       </main>
     </>

@@ -41,7 +41,7 @@ export default function CreatePublication({ onNewPublication }) {
     setError(null);
 
     try {
-      const newPublication = await apiFetch("/publication/", {
+      const newPublication = await apiFetch("/publications/", {
         method: "POST",
         body: JSON.stringify({ text }),
       });
@@ -51,9 +51,9 @@ export default function CreatePublication({ onNewPublication }) {
       if (onNewPublication) onNewPublication(newPublication);
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/publication/"], exact: false }),
-        queryClient.invalidateQueries({ queryKey: [`/publication/public/${user.username}`], exact: false }),
-        queryClient.invalidateQueries({ queryKey: ["/publication/following"], exact: false }),
+        queryClient.invalidateQueries({ queryKey: ["/publications/"], exact: false }),
+        queryClient.invalidateQueries({ queryKey: [`/publications/public/${user.username}`], exact: false }),
+        queryClient.invalidateQueries({ queryKey: ["/publications/following"], exact: false }),
       ]);
     } catch (err) {
       setError(err.message || "Error al crear la publicacion.");
