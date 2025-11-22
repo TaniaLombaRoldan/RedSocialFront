@@ -1,8 +1,9 @@
 // src/components/CreatePublication.jsx
-import { useState } from "react";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/useAuth";
 import { apiFetch } from "../api/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * @typedef {Object} CreatePublicationProps
@@ -21,33 +22,27 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function CreatePublication({ onNewPublication }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [text, setText] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
 
-  if (!user) {
-    return <p>Debes estar logueado para crear una publicacion.</p>;
-  }
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      text: "",
+    },
+    mode: "onBlur",
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!text.trim()) {
-      setError("La publicacion no puede estar vacia.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const newPublication = await apiFetch("/publications/", {
+  const mutation = useMutation({
+    mutationFn: async ({ text }) =>
+      apiFetch("/publications/", {
         method: "POST",
         body: JSON.stringify({ text }),
-      });
-
-      setText("");
-
+      }),
+    onSuccess: async (newPublication) => {
+      reset();
       if (onNewPublication) onNewPublication(newPublication);
 
       await Promise.all([
@@ -55,12 +50,18 @@ export default function CreatePublication({ onNewPublication }) {
         queryClient.invalidateQueries({ queryKey: [`/publications/public/${user.username}`], exact: false }),
         queryClient.invalidateQueries({ queryKey: ["/publications/following"], exact: false }),
       ]);
-    } catch (err) {
-      setError(err.message || "Error al crear la publicacion.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  const onSubmit = async (values) => {
+    if (!user) return;
+    await mutation.mutateAsync(values);
   };
+
+  const isDisabled = useMemo(
+    () => !user || isSubmitting || mutation.isPending,
+    [user, isSubmitting, mutation.isPending]
+  );
 
   return (
     <div
@@ -79,39 +80,50 @@ export default function CreatePublication({ onNewPublication }) {
         Crea una nueva publicacion
       </h3>
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         style={{
           display: "flex",
           flexDirection: "column",
           gap: "12px",
         }}
+        noValidate
       >
         <textarea
-        value={text}
-          onChange={(e) => setText(e.target.value)}
-        placeholder="¿Qué estás pensando?"
-        rows={4}
-       style={{
-         width: "100%",
-        padding: "14px",
-        borderRadius: "16px",
-         border: "1px solid rgba(244,251,255,0.2)",
-         resize: "none",
-        backgroundColor: "#ffffff",
-          color: "#082032",
-          boxShadow: "0 10px 25px rgba(3,31,59,0.25)",
-            
-        '::placeholder': {
-            color: "#082032"
-    }
-  }}
-  disabled={isSubmitting}
+          placeholder={user ? "Que esta pasando?" : "Inicia sesion para publicar"}
+          rows={4}
+          {...register("text", {
+            required: user ? "La publicacion no puede estar vacia." : false,
+            minLength: {
+              value: 3,
+              message: "La publicacion debe tener al menos 3 caracteres.",
+            },
+            maxLength: {
+              value: 280,
+              message: "La publicacion no puede superar los 280 caracteres.",
+            },
+          })}
+          style={{
+            width: "100%",
+            padding: "14px",
+            borderRadius: "16px",
+            border: "1px solid rgba(244,251,255,0.2)",
+            resize: "none",
+            backgroundColor: "#ffffff",
+            color: "#082032",
+            boxShadow: "0 10px 25px rgba(3,31,59,0.25)",
+          }}
+          disabled={isDisabled}
         />
-        <button type="submit" disabled={isSubmitting} style={{ alignSelf: "flex-end" }}>
-          {isSubmitting ? "Publicando..." : "Publicar"}
+        {errors.text && <p style={{ color: "red" }}>{errors.text.message}</p>}
+        <button type="submit" disabled={isDisabled} style={{ alignSelf: "flex-end" }}>
+          {mutation.isPending || isSubmitting ? "Publicando..." : "Publicar"}
         </button>
       </form>
-      {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+      {mutation.isError && (
+        <p style={{ color: "red", marginTop: "10px" }}>
+          {mutation.error?.message || "Error al crear la publicacion."}
+        </p>
+      )}
     </div>
   );
 }
