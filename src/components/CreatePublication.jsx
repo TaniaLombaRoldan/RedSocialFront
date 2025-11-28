@@ -1,8 +1,17 @@
 // src/components/CreatePublication.jsx
+/**
+ * Formulario controlado para crear publicaciones.
+ * Comentado linea a linea en español sin modificar la logica.
+ */
+// useMemo para deshabilitar boton en base a estados.
 import { useMemo } from "react";
+// useForm para gestionar inputs y validacion.
 import { useForm } from "react-hook-form";
+// useMutation y useQueryClient para mutar y refrescar cache.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../context/useAuth";
+// Hook de autenticacion para obtener el usuario actual.
+import { useAuth } from "../hooks/useAuth";
+// Cliente HTTP para comunicarse con la API.
 import { apiFetch } from "../api/client";
 
 /**
@@ -20,31 +29,42 @@ import { apiFetch } from "../api/client";
  * @returns {JSX.Element}
  */
 export default function CreatePublication({ onNewPublication }) {
+  // Obtenemos los datos del usuario autenticado.
   const { user } = useAuth();
+  // Cliente de React Query para invalidar queries tras mutar.
   const queryClient = useQueryClient();
 
+  // Configuracion de react-hook-form.
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm({
+    // Valor inicial del textarea.
     defaultValues: {
       text: "",
     },
+    // Validamos al perder foco.
     mode: "onBlur",
   });
 
+  // Mutacion para crear una publicacion nueva.
   const mutation = useMutation({
+    // Llamada a la API con POST y el texto.
     mutationFn: async ({ text }) =>
       apiFetch("/publications/", {
         method: "POST",
         body: JSON.stringify({ text }),
       }),
+    // Al completar con exito, reseteamos e invalidamos listas relacionadas.
     onSuccess: async (newPublication) => {
+      // Limpiamos formulario.
       reset();
+      // Avisamos al padre si se proveyo callback.
       if (onNewPublication) onNewPublication(newPublication);
 
+      // Invalidamos las queries de publicaciones para refrescar datos.
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/publications/"], exact: false }),
         queryClient.invalidateQueries({ queryKey: [`/publications/public/${user.username}`], exact: false }),
@@ -53,16 +73,20 @@ export default function CreatePublication({ onNewPublication }) {
     },
   });
 
+  // Submit handler para crear la publicacion.
   const onSubmit = async (values) => {
+    // Si no hay usuario, no permitimos enviar.
     if (!user) return;
     await mutation.mutateAsync(values);
   };
 
+  // Determina si el boton debe estar deshabilitado.
   const isDisabled = useMemo(
     () => !user || isSubmitting || mutation.isPending,
     [user, isSubmitting, mutation.isPending]
   );
 
+  // Render del formulario.
   return (
     <div
       style={{
@@ -76,9 +100,11 @@ export default function CreatePublication({ onNewPublication }) {
         color: "var(--atlantar-light)",
       }}
     >
+      {/* Titulo de la seccion. */}
       <h3 style={{ marginTop: 0, letterSpacing: "0.05em", color: "var(--atlantar-foam)" }}>
         Crea una nueva publicacion
       </h3>
+      {/* Formulario principal. */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         style={{
@@ -88,6 +114,7 @@ export default function CreatePublication({ onNewPublication }) {
         }}
         noValidate
       >
+        {/* Campo de texto de la publicacion. */}
         <textarea
           placeholder={user ? "Que esta pasando?" : "Inicia sesion para publicar"}
           rows={4}
@@ -114,11 +141,14 @@ export default function CreatePublication({ onNewPublication }) {
           }}
           disabled={isDisabled}
         />
+        {/* Mensaje de error para el texto si aplica. */}
         {errors.text && <p style={{ color: "red" }}>{errors.text.message}</p>}
+        {/* Boton de envio alineado a la derecha. */}
         <button type="submit" disabled={isDisabled} style={{ alignSelf: "flex-end" }}>
           {mutation.isPending || isSubmitting ? "Publicando..." : "Publicar"}
         </button>
       </form>
+      {/* Error general de la mutacion. */}
       {mutation.isError && (
         <p style={{ color: "red", marginTop: "10px" }}>
           {mutation.error?.message || "Error al crear la publicacion."}
