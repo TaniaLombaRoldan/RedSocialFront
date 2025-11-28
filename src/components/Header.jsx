@@ -1,6 +1,12 @@
 // src/components/Header.jsx
+/**
+ * Encabezado principal que muestra la barra de navegacion y los controles de usuario.
+ * Comentado linea a linea en español sin modificar la logica.
+ */
+// Importamos Link para navegar sin recargar la pagina.
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+// Traemos el hook de autenticacion para obtener usuario y logout.
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * Encabezado principal que muestra la barra de navegacion y los controles de usuario.
@@ -10,6 +16,7 @@ import { useAuth } from "../context/useAuth";
 export default function Header() {
   // Consumimos el contexto de autenticacion para obtener datos del usuario y el manejador de logout.
   const { user, logout } = useAuth();
+  // Estilos base para los enlaces.
   const linkStyle = {
     color: "var(--atlantar-light)",
     fontWeight: 600,

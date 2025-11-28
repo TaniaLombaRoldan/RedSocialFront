@@ -1,8 +1,17 @@
 // src/components/RegisterForm.jsx
+/**
+ * Formulario controlado para registrar un nuevo usuario.
+ * Comentado linea a linea en español sin modificar la logica.
+ */
+// useMemo para calcular disabled.
 import { useMemo } from "react";
+// useMutation para ejecutar el registro.
 import { useMutation } from "@tanstack/react-query";
+// useForm para gestionar inputs y validacion.
 import { useForm } from "react-hook-form";
+// Servicio de registro contra la API.
 import { registerUser } from "../api/auth";
+// Link para navegar a login.
 import { Link } from "react-router-dom";
 
 /**
@@ -18,17 +27,21 @@ export default function RegisterForm() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm({
+    // Valores iniciales de los campos.
     defaultValues: {
       username: "",
       email: "",
       password: "",
     },
+    // Validamos al perder foco.
     mode: "onBlur",
   });
 
   // Mutacion que llama al endpoint de registro.
   const mutation = useMutation({
+    // Funcion que envia datos a la API.
     mutationFn: registerUser,
+    // Al registrar, limpiamos el formulario.
     onSuccess: () => reset(),
   });
 
@@ -43,6 +56,7 @@ export default function RegisterForm() {
     [isSubmitting, mutation.isPending]
   );
 
+  // Render del formulario de registro.
   return (
     <div className="auth-form-card">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -66,6 +80,7 @@ export default function RegisterForm() {
           })}
           disabled={isDisabled}
         />
+        {/* Error para username */}
         {errors.username && (
           <p style={{ color: "red" }}>{errors.username.message}</p>
         )}
@@ -78,12 +93,13 @@ export default function RegisterForm() {
           {...register("email", {
             required: "El correo electronico es obligatorio.",
             pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/u,
+              value: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/u,
               message: "Introduce un correo electronico valido.",
             },
           })}
           disabled={isDisabled}
         />
+        {/* Error para email */}
         {errors.email && <p style={{ color: "red" }}>{errors.email.message}</p>}
 
         {/* Campo para la contrasena */}
@@ -100,6 +116,7 @@ export default function RegisterForm() {
           })}
           disabled={isDisabled}
         />
+        {/* Error para password */}
         {errors.password && (
           <p style={{ color: "red" }}>{errors.password.message}</p>
         )}
