@@ -1,6 +1,13 @@
 // src/hooks/usePagination.jsx
+/**
+ * Hook reutilizable que implementa paginacion basica.
+ * Incluimos comentarios linea a linea en español sin alterar la logica.
+ */
+// Importamos useState para manejar el numero de pagina.
 import { useState } from "react";
+// Importamos useQuery de React Query para gestionar fetch y cache.
 import { useQuery } from "@tanstack/react-query";
+// Cliente HTTP centralizado.
 import { apiFetch } from "../api/client";
 
 /**
@@ -25,12 +32,14 @@ export function usePagination(endpoint, pageSize = 5) {
 
   // React Query maneja cache y estados de peticion.
   const { data, isLoading, isError, error } = useQuery({
+    // La clave identifica la query segun endpoint y pagina actual.
     queryKey: [endpoint, page],
     // Concatenamos parametros de paginacion y orden descendente por fecha.
     queryFn: () =>
       apiFetch(
         `${endpoint}?page=${page}&size=${pageSize}&sort=createDate,desc`
       ),
+    // Mantiene datos previos mientras llega la nueva pagina para evitar parpadeos.
     keepPreviousData: true,
   });
 
@@ -38,7 +47,9 @@ export function usePagination(endpoint, pageSize = 5) {
   const items = data?.content || [];
   const totalPages = data?.totalPages || 1;
 
+  // Scroll suave al inicio de la pagina tras cambiar pagina.
   const scrollToTop = () => {
+    // Comprobamos que estamos en navegador antes de usar window.
     if (typeof window !== "undefined" && window.scrollTo) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -60,6 +71,7 @@ export function usePagination(endpoint, pageSize = 5) {
     }
   };
 
+  // Exponemos estado y handlers para que el componente consumidor los use.
   return {
     items,
     page,

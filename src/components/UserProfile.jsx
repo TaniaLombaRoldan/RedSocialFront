@@ -1,38 +1,48 @@
+// Perfil publico de un usuario con listas plegables de seguidores/seguidos.
+// Comentado linea a linea en español sin modificar la logica.
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../hooks/useAuth";
 
 /**
- * Componente que muestra el perfil público de un usuario con un resumen
- * compacto para email, descripción y contadores, además de listas plegables.
+ * Componente que muestra el perfil publico de un usuario con un resumen
+ * compacto para email, descripcion y contadores, ademas de listas plegables.
  */
 export default function UserProfile() {
+  // Nombre del usuario visitado obtenido de la URL.
   const { name } = useParams();
+  // Usuario autenticado para diferenciar enlaces a su propio perfil.
   const { user: authUser } = useAuth();
 
+  // Estado del perfil cargado.
   const [profile, setProfile] = useState(null);
+  // Flags de carga y error.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Contadores de seguidores y seguidos.
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
+  // Listas detalladas de seguidores y seguidos.
   const [followersList, setFollowersList] = useState([]);
   const [followingList, setFollowingList] = useState([]);
 
+  // Flags para mostrar/ocultar listas.
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
 
+  // Cierra desplegables y hace scroll al top al navegar a otro usuario.
   const handleNavigateUser = () => {
-    // Al navegar a otro usuario, cerramos los desplegables y subimos a la cabecera.
     setShowFollowers(false);
     setShowFollowing(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Carga datos del perfil y sus listas al montar o al cambiar el nombre visitado.
   useEffect(() => {
-    // Aseguramos que cada vez que cambie el perfil visitado se muestre desde arriba.
+    // Garantiza que se vea el inicio al cambiar de perfil.
     window.scrollTo({ top: 0, behavior: "auto" });
 
     async function loadProfile() {
@@ -40,16 +50,19 @@ export default function UserProfile() {
         setLoading(true);
         setError(null);
 
+        // Peticiones en paralelo: datos del perfil, seguidores y seguidos publicos.
         const profilePromise = apiFetch(`/users/public/${name}`);
         const followersPromise = apiFetch(`/users/public/followers/${name}`);
         const followingPromise = apiFetch(`/users/public/following/${name}`);
 
+        // Esperamos los tres resultados juntos.
         const [profileData, followersData, followingData] = await Promise.all([
           profilePromise,
           followersPromise,
           followingPromise,
         ]);
 
+        // Actualizamos estado con los datos recibidos.
         setProfile(profileData);
         setFollowersList(followersData);
         setFollowersCount(followersData.length);
@@ -65,10 +78,12 @@ export default function UserProfile() {
     loadProfile();
   }, [name]);
 
+  // Estados de carga y error antes de renderizar datos.
   if (loading) return <p>Cargando perfil...</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error.message}</p>;
-  if (!profile) return <p>No se encontró el perfil del usuario.</p>;
+  if (!profile) return <p>No se encontro el perfil del usuario.</p>;
 
+  // Render principal del perfil publico.
   return (
     <div
       style={{
@@ -77,11 +92,14 @@ export default function UserProfile() {
         gap: "12px",
       }}
     >
+      {/* Email del perfil */}
       <p style={{ margin: 0, color: "#0f2c45", fontWeight: 600 }}>{profile.email}</p>
+      {/* Descripcion del perfil */}
       <p style={{ margin: 0, color: "#2c3d4f" }}>
-        {profile.description || "Sin descripción disponible"}
+        {profile.description || "Sin descripcion disponible"}
       </p>
 
+      {/* Contadores de seguidores y seguidos */}
       <div
         style={{
           display: "flex",
@@ -107,6 +125,7 @@ export default function UserProfile() {
         </div>
       </div>
 
+      {/* Botones para desplegar/plegar listas */}
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
         <button
           onClick={() => setShowFollowers(!showFollowers)}
@@ -137,6 +156,7 @@ export default function UserProfile() {
         </button>
       </div>
 
+      {/* Lista de seguidores */}
       {showFollowers && (
         <div style={{ marginTop: "8px" }}>
           <p style={{ margin: "6px 0", fontWeight: 600, color: "#0f2c45" }}>
@@ -153,6 +173,7 @@ export default function UserProfile() {
             }}
           >
             {followersList.map((u) => {
+              // Si es el propio usuario autenticado, apunta a /me en lugar de /profile/:name.
               const target =
                 authUser?.username && u.username === authUser.username
                   ? "/me"
@@ -186,6 +207,7 @@ export default function UserProfile() {
         </div>
       )}
 
+      {/* Lista de seguidos */}
       {showFollowing && (
         <div style={{ marginTop: "12px" }}>
           <p style={{ margin: "6px 0", fontWeight: 600, color: "#0f2c45" }}>
@@ -202,6 +224,7 @@ export default function UserProfile() {
             }}
           >
             {followingList.map((u) => {
+              // Si es el usuario actual, navegamos a /me.
               const target =
                 authUser?.username && u.username === authUser.username
                   ? "/me"

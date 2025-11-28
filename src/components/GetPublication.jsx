@@ -1,9 +1,19 @@
 // src/components/GetPublication.jsx
+/**
+ * Tarjeta que muestra una publicacion individual y permite borrarla si es del autor.
+ * Comentada linea a linea en español sin modificar la logica.
+ */
+// Hooks de React para efectos y referencias.
 import { useEffect, useRef } from "react";
+// Mutaciones y cliente de React Query para borrar y refrescar cache.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+// Navegacion programatica para ir a perfiles.
 import { useNavigate } from "react-router-dom";
+// Libreria de animaciones.
 import { gsap } from "gsap";
-import { useAuth } from "../context/useAuth";
+// Hook de autenticacion para conocer el usuario actual.
+import { useAuth } from "../hooks/useAuth";
+// Cliente HTTP para la API.
 import { apiFetch } from "../api/client";
 
 /**
@@ -27,14 +37,18 @@ export default function GetPublication({ id, authorName, text, createDate }) {
   const navigate = useNavigate();
   // Cliente para invalidar caches despues de borrar.
   const queryClient = useQueryClient();
+  // Ref al contenedor para animaciones de entrada.
   const pubRef = useRef(null);
 
   // Animacion de entrada al hacer scroll usando GSAP + ScrollTrigger (registrado en main.jsx).
   useEffect(() => {
+    // Obtenemos el elemento de la publicacion.
     const el = pubRef.current;
     if (!el) return;
 
+    // Estado inicial para la animacion.
     gsap.set(el, { opacity: 0, y: 50 });
+    // Tween de entrada con ScrollTrigger.
     const tween = gsap.to(el, {
       opacity: 1,
       y: 0,
@@ -47,6 +61,7 @@ export default function GetPublication({ id, authorName, text, createDate }) {
       },
     });
 
+    // Limpieza del tween al desmontar.
     return () => {
       tween?.kill();
       gsap.killTweensOf(el);
@@ -55,15 +70,17 @@ export default function GetPublication({ id, authorName, text, createDate }) {
 
   // Mutacion encargada de borrar la publicacion e invalidar las queries relacionadas.
   const deleteMutation = useMutation({
+    // Peticion DELETE al endpoint de la publicacion.
     mutationFn: async () => {
       await apiFetch(`/publications/${id}`, { method: "DELETE" });
     },
+    // Al terminar, invalidamos cualquier query de publicaciones.
     onSuccess: () => {
-      // Invalida cualquier query relacionada con publicaciones para refrescar la vista.
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0]?.includes("/publications"),
       });
     },
+    // Mostramos un alert basico si hay error al borrar.
     onError: (error) => {
       alert(`Error al borrar publicacion: ${error.message}`);
     },
@@ -76,6 +93,7 @@ export default function GetPublication({ id, authorName, text, createDate }) {
     }
   };
 
+  // Render de la tarjeta.
   return (
     <div
       ref={pubRef}
@@ -106,6 +124,7 @@ export default function GetPublication({ id, authorName, text, createDate }) {
             marginLeft: 6,
           }}
         >
+          {/* Fecha de creacion formateada. */}
           {new Date(createDate).toLocaleString("es-ES", {
             timeZone: "Europe/Madrid",
           })}

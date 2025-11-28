@@ -1,10 +1,20 @@
 // src/components/LoginForm.jsx
+/**
+ * Formulario de autenticacion que permite a un usuario iniciar sesion.
+ * Comentado linea a linea en español sin modificar la logica.
+ */
+// useMemo para evitar recalculos del estado disabled.
 import { useMemo } from "react";
+// useMutation para ejecutar la peticion de login.
 import { useMutation } from "@tanstack/react-query";
+// react-hook-form para gestionar inputs y validacion.
 import { useForm } from "react-hook-form";
+// Link para navegar a registro.
 import { Link } from "react-router-dom";
+// Servicio de login contra la API.
 import { loginUser } from "../api/auth";
-import { useAuth } from "../context/useAuth";
+// Hook para acceder a acciones de autenticacion global.
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * Formulario de autenticacion que permite a un usuario iniciar sesion.
@@ -21,16 +31,20 @@ export default function LoginForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
+    // Valores iniciales de los campos.
     defaultValues: {
       username: "",
       password: "",
     },
+    // Validamos al perder foco.
     mode: "onBlur",
   });
 
   // Mutacion encargada de invocar la API de login y manejar la respuesta.
   const mutation = useMutation({
+    // Funcion que se ejecuta con los valores del formulario.
     mutationFn: loginUser,
+    // Si el login es exitoso, guardamos token y usuario en contexto.
     onSuccess: (data) => {
       // La API deberia retornar { access_token, username }.
       login(data.access_token, { username: data.username });
@@ -48,9 +62,12 @@ export default function LoginForm() {
     [isSubmitting, mutation.isPending]
   );
 
+  // Render del formulario de login.
   return (
     <div className="auth-form-card">
+      {/* Envolvemos todo en <form> para manejo de submit. */}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {/* Titulo del formulario. */}
         <h3>Iniciar sesion en Atlantar</h3>
 
         {/* Campo controlado para capturar el username */}
@@ -73,6 +90,7 @@ export default function LoginForm() {
           })}
           disabled={isDisabled}
         />
+        {/* Mensaje de error asociado al username si existe. */}
         {errors.username && (
           <p style={{ color: "red" }}>{errors.username.message}</p>
         )}
@@ -93,11 +111,12 @@ export default function LoginForm() {
           })}
           disabled={isDisabled}
         />
+        {/* Mensaje de error asociado a la contrasena si existe. */}
         {errors.password && (
           <p style={{ color: "red" }}>{errors.password.message}</p>
         )}
 
-        {/* Deshabilitamos mientras la mutacion esta en curso */}
+        {/* Boton de envio; deshabilitado mientras se procesa. */}
         <button type="submit" disabled={isDisabled}>
           {isDisabled ? "Entrando..." : "Entrar"}
         </button>
