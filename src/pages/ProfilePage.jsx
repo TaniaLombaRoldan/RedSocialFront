@@ -128,7 +128,11 @@ export default function ProfilePage() {
     };
   }, [name, user]);
 
-  // Handler para seguir al usuario visitado.
+  /**
+   * Handler asincrono que pide a la API seguir al usuario visitado.
+   * Marca la UI en carga, limpia errores previos y refresca el perfil al terminar.
+   * @returns {Promise<void>} Promesa que resuelve cuando la API responde y el estado se actualiza.
+   */
   const handleFollow = async () => {
     // Evitamos llamadas duplicadas o si ya seguimos.
     if (followLoading || isFollowing) return;
@@ -152,7 +156,11 @@ export default function ProfilePage() {
     }
   };
 
-  // Handler para dejar de seguir al usuario visitado.
+  /**
+   * Handler asincrono para dejar de seguir al usuario actual.
+   * Gestiona las banderas de carga, captura errores y fuerza la recarga del perfil.
+   * @returns {Promise<void>} Promesa resuelta tras completar la llamada.
+   */
   const handleUnfollow = async () => {
     // Evitamos repeticion si ya esta cargando.
     if (followLoading) return;
@@ -176,7 +184,10 @@ export default function ProfilePage() {
     }
   };
 
-  // Handler principal que decide seguir o dejar de seguir segun estado actual.
+  /**
+   * Handler principal que decide si ejecutar follow o unfollow.
+   * Centraliza el click del CTA para mantener la logica en un unico punto.
+   */
   const handleMainFollowClick = () => {
     // Si ya seguimos, ejecuta unfollow; si no, follow.
     if (isFollowing) handleUnfollow();
@@ -186,6 +197,7 @@ export default function ProfilePage() {
   // Render del componente.
   return (
     <>
+      {/* Fragmento que envuelve cabecera y contenido sin sumar un contenedor extra al DOM. */}
       {/* Cabecera global. */}
       <Header />
       {/* Contenedor principal con estilos de tema Atlantar. */}

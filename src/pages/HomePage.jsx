@@ -16,6 +16,7 @@ export default function HomePage() {
   // Render principal de la pagina.
   return (
     <>
+      {/* Fragmento para agrupar cabecera y contenido sin crear un contenedor extra. */}
       {/* Cabecera con menu y acciones. */}
       <Header />
       {/* Contenedor del contenido principal con padding. */}

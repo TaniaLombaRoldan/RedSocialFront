@@ -19,6 +19,7 @@ export default function MyProfilePage() {
   // Render principal de la pagina.
   return (
     <>
+      {/* Fragmento raiz que evita divs extra al envolver cabecera y contenidos. */}
       {/* Cabecera con navegacion y acciones. */}
       <Header />
       {/* Contenido principal con padding. */}
