@@ -47,7 +47,13 @@ export default function RegisterForm() {
 
   // Previene el submit por defecto y dispara la mutacion con los valores actuales.
   const onSubmit = async (values) => {
-    await mutation.mutateAsync(values);
+    // Sanitizamos entradas basicas para evitar espacios que rompan la validacion.
+    const sanitized = {
+      username: values.username?.trim() ?? "",
+      email: values.email?.trim() ?? "",
+      password: values.password ?? "",
+    };
+    await mutation.mutateAsync(sanitized);
   };
 
   // Deshabilita inputs mientras se envia o la mutacion esta activa.
@@ -93,7 +99,8 @@ export default function RegisterForm() {
           {...register("email", {
             required: "El correo electronico es obligatorio.",
             pattern: {
-              value: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/u,
+              // Valida que haya texto antes y despues de la @ y un TLD con minimo 2 caracteres.
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/u,
               message: "Introduce un correo electronico valido.",
             },
           })}

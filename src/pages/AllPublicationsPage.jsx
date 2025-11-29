@@ -18,6 +18,7 @@ export default function AllPublicationsPage() {
   // Render principal de la pagina.
   return (
     <>
+      {/* Fragmento vacio para evitar nodos extra en el DOM */}
       {/* Cabecera fija con navegacion y usuario. */}
       <Header />
       {/* Contenedor principal con padding para espaciar contenido. */}
