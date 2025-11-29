@@ -139,8 +139,17 @@ export default function MyUserProfile() {
         window.location.replace("/login");
       }, 2000);
     } catch (err) {
+      // Normalizamos el mensaje para detectar el error especifico de datos invalidos y mostrar uno mas claro.
+      const rawMsg = typeof err?.message === "string" ? err.message : "";
+      const normalized = rawMsg
+        ? rawMsg.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+        : "";
+      const msg = normalized.includes("datos invalidos")
+        ? "Ese nombre de usuario ya esta en uso. Prueba con otro distinto."
+        : rawMsg;
+
       // Mostramos error y permitimos reintento.
-      setUpdateError(err.message || "Error al actualizar el nombre.");
+      setUpdateError(msg || "Error al actualizar el nombre.");
       setIsUpdating(false);
     }
   };
