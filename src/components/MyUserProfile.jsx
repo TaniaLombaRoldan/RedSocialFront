@@ -136,7 +136,7 @@ export default function MyUserProfile() {
       setTimeout(() => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.replace("/login");
+        window.location.replace("/");
       }, 2000);
     } catch (err) {
       // Normalizamos el mensaje para detectar el error especifico de datos invalidos y mostrar uno mas claro.
